@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<!--- Header information about the page -->
+<body>
+    <div layout:fragment="content">
+        <script src="https://tildesites.bowdoin.edu/~k.preslermarshall/AngularJS/angular.min.js"></script>
+        <script>
+            /* Without these comments, Thymeleaf will try to parse the Javascript as XML and break itself sometimes */
+            /*<![CDATA[*/ 
+            var app = angular.module('myApp', []);
+            app.controller('populateCtrl', function($scope, $http) {
+
+                console.log("Hello world");
+
+                $scope.math = function(a,b){
+                    return (a*a) + (b*b)
+                }
+
+                $scope.days = [
+                    {value: 1, display: 'Monday'},
+                    {value: 2, display: 'Tuesday'},
+                    {value: 3, display: 'Wednesday'},
+                    {value: 4, display: 'Thursday'},
+                    {value: 5, display: 'Friday'},
+                    {value: 6, display: 'Saturday'},
+                    {value: 7, display: 'Sunday'}
+                ];
+
+                $scope.courses = [
+                    "Math",
+                    "CSCI",
+                    "English",
+                    "History",
+                    "Science"
+                ];
+
+                $scope.commitData = {
+                    "Bryler Fisher (bfisher@bowdoin.edu)":
+                        [
+                            { "count": 0, "display": "05/01/2024 00:00", "timestamp": 1583038800000 },
+                            { "count": 0, "display": "05/03/2024 00:00", "timestamp": 1583211600000 }
+                        ],
+                    "Conor Padmanabhan (cpadmanabhan@bowdoin.edu)":
+                        [
+                            { "count": 0, "display": "04/28/2024 00:00", "timestamp": 1583038700000 },
+                            { "count": 0, "display": "04/30/2024 00:00", "timestamp": 1583211600000 },
+                            { "count": 0, "display": "05/04/2024 00:00", "timestamp": 1583384400000 }
+                        ],
+                    "Nathan Oyeka (noyeka@bowdoin.edu)":
+                        [
+                            { "count": 0, "display": "04/26/2024 00:00", "timestamp": 1583038500000 },
+                            { "count": 0, "display": "05/02/2024 00:00", "timestamp": 1583211400000 },
+                        ]
+                    };
+                /* Logic that handles controlling your page goes here */
+
+            });
+            
+            /* Without these comments, Thymeleaf will try to parse the Javascript as XML and break itself sometimes */
+            /*]]>*/
+        </script>
+
+        <div ng-app="myApp" ng-controller="populateCtrl">
+
+            <input type="text" ng-model="x" required="true">
+            <input type="text" ng-model="y" required="true">
+            <p> The result is {{math(x,y)}}</p>
+            <button ng-click="buttonFunction()">Click Me!</button>
+
+            <div class="col-sm">
+            Select time interval: <br />
+            <select ng-model="interval"
+                ng-options="item as item.display for item in days"
+                required="true">
+              <option value="">Select time interval for viewing data</option>
+            </select>
+            </div>
+
+            <div class="col-sm">
+                Select the courses to view <br />
+                 <div ng-repeat="course in courses track by $index">
+                    <input type="checkbox"
+                        ng-model="$parent.selectedCourses[course]">
+                    <tt> {{course}}</tt>
+                    </input>
+                </div>
+            </div>
+
+            
+            <div ng-repeat="(user, commits) in commitData track by $index">
+                Commits for {{user}}:<br />
+                <div id="{{user}}">
+                    <li ng-repeat="commit in commits">{{commit.display}}</li>
+                </div>
+            </div>
+
+            <!--- Various HTML elements, with extra tags telling Angular how to work with them, go here -->
+
+        </div>
+        
+    </div>
+
+</body>
+</html>

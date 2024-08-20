@@ -1,0 +1,311 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Add an Ingredient</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #87CEEB, #4682B4);
+            font-family: Arial, sans-serif;
+        }
+
+        .generic-container {
+            margin: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .panel-heading {
+            background-color: #5bc0de;
+            color: #fff;
+            padding: 10px 15px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+
+        .formcontainer {
+            padding: 20px 0;
+        }
+
+        .form-horizontal .control-lable {
+            text-align: right;
+            margin-top: 7px;
+            margin-bottom: 0;
+            padding-right: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            height: 34px;
+            padding: 6px 12px;
+            font-size: 14px;
+            line-height: 1.42857143;
+            color: #555;
+            background-color: #fff;
+            background-image: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+            -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+            -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+            transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+        }
+
+        .form-actions {
+            text-align: right;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            font-size: 14px;
+            font-weight: normal;
+            line-height: 1.42857143;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            -ms-touch-action: manipulation;
+            touch-action: manipulation;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background-image: none;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: #337ab7;
+            border-color: #2e6da4;
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active,
+        .btn-primary.active,
+        .open .dropdown-toggle.btn-primary {
+            color: #fff;
+            background-color: #286090;
+            border-color: #204d74;
+        }
+
+        .btn-warning {
+            color: #fff;
+            background-color: #f0ad4e;
+            border-color: #eea236;
+        }
+
+        .btn-warning:hover,
+        .btn-warning:focus,
+        .btn-warning:active,
+        .btn-warning.active,
+        .open .dropdown-toggle.btn-warning {
+            color: #fff;
+            background-color: #ec971f;
+            border-color: #d58512;
+        }
+
+        .ng-cloak {
+            display: none !important;
+        }
+
+        .has-error {
+            color: red;
+        }
+    </style>
+    <link rel="stylesheet" href="css/bootstrap.css" />
+    <link rel="stylesheet" href="css/app.css" />
+</head>
+
+<body>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+    <script>
+        var app = angular.module('myApp', []);
+        app.controller('addIngredientCtrl', function ($scope, $http) {
+            $scope.inventoryIngredients = []; // Initially empty array for inventory ingredients
+            $scope.ingredient = {
+                name: '',
+                unit: ''
+            };
+
+            // Load inventory from the server
+            $scope.loadInventory = function () {
+                $http.get('/api/v1/inventory')
+                    .then(function (response) {
+                        if (response.data && response.data.ingredients && response.data.ingredients.length > 0) {
+                            $scope.inventoryIngredients = response.data.ingredients;
+                        } else {
+                            console.log('Inventory is currently empty.', response);
+                        }
+                    }, function (error) {
+                        console.error('Error fetching current inventory:', error);
+                        alert('Failed to load current inventory: ' + (error.statusText || 'Server error'));
+                    });
+            };
+
+            // Add new ingredient to inventory
+            $scope.addIngredient = function () {
+                if (!$scope.ingredient.name) {
+                    alert("Please enter an ingredient name.");
+                    return;
+                }
+                if (!$scope.ingredient.unit || $scope.ingredient.unit <= 0) {
+                    alert("Please enter a valid positive ingredient amount.");
+                    return;
+                }
+
+                // Check the ingredient already exists
+                var existingIngredient = $scope.inventoryIngredients.find(function (ingredient) {
+                    return ingredient.name.toLowerCase() === $scope.ingredient.name.toLowerCase();
+                });
+
+                if (existingIngredient) {
+                    alert("Ingredient already exists in the inventory.");
+                    return;
+                }
+
+                // Prepare the updated inventory object
+                var newIngredient = {
+                    name: $scope.ingredient.name,
+                    amount: parseInt($scope.ingredient.unit, 10)
+                };
+                $scope.inventoryIngredients.push(newIngredient);
+
+                // Update the inventory on the server
+                var updatedInventory = { ingredients: $scope.inventoryIngredients };
+                $http.put("/api/v1/inventory", updatedInventory)
+                    .then(function (response) {
+                        alert("Ingredient added successfully!");
+                        $scope.loadInventory(); // Reload the inventory
+                    }).catch(function (error) {
+                        console.error("Error updating inventory:", error);
+                        alert("Error adding ingredient: " + (error.statusText || 'Server error'));
+                    });
+            };
+
+            // Reset the form to its default state
+            $scope.reset = function () {
+                $scope.ingredient = {
+                    name: '',
+                    unit: ''
+                };
+                if ($scope.addIngredientForm) {
+                    $scope.addIngredientForm.$setPristine();
+                    $scope.addIngredientForm.$setUntouched();
+                }
+            };
+
+            // Function to call on form submit
+            $scope.submit = function () {
+                $scope.addIngredient();
+                $scope.reset();
+            };
+
+            // Initialize inventory and reset form on controller load
+            $scope.loadInventory();
+            $scope.reset();
+        });
+    </script>
+
+
+    <div ng-app="myApp" class="generic-container ng-cloak" ng-controller="addIngredientCtrl as ctrl">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="lead">Add an Ingredient</span>
+            </div>
+
+            <div class="formcontainer">
+                <form ng-submit="submit()" name="addIngredientForm" class="form-horizontal">
+                    <div class="row">
+                        <div class="form-group col-md-12">
+                            <label class="col-md-2 control-label" for="file">Name of Ingredient</label>
+                            <div class="col-md-7">
+                                <input type="text" ng-model="ingredient.name" name="name"
+                                    class="name form-control input-sm" placeholder="Enter ingredient name"
+                                    required="true" />
+                                <div class="has-error" ng-show="addIngredientForm.$dirty">
+                                    <span ng-show="addIngredientForm.name.$error.required">This
+                                        is a required field.</span> <span ng-show="addIngredientForm.name.$invalid">This
+                                        field is
+                                        invalid.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group col-md-12">
+                            <label class="col-md-2 control-label" for="file">Unit of Ingredient</label>
+                            <div class="col-md-7">
+                                <input type="number" ng-model="ingredient.unit" name="unit"
+                                    class="unit form-control input-sm" placeholder="Enter unit of ingredient"
+                                    required="true" min="0" />
+                                <div class="has-error" ng-show="addIngredientForm.$dirty">
+                                    <span ng-show="addIngredientForm.unit.$error.required">This
+                                        is a required field</span> <span
+                                        ng-show="addIngredientForm.unit.$error.min">Minimum amount
+                                        is 0</span> <span ng-show="addIngredientForm.unit.$invalid">This
+                                        field is invalid </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-actions floatRight">
+                            <input type="submit" value="Submit" class="btn btn-primary btn-sm"
+                                ng-disabled="addIngredientForm.$invalid" />
+                            <button type="button" ng-click="reset()" class="btn btn-warning btn-sm"
+                                ng-disabled="addIngredientForm.$pristine">Reset Form</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div ng-show="success">Ingredient Created</div>
+            <div ng-show="failure">Error while adding ingredient.</div>
+
+            <!-- Inventory display table -->
+            <div style="margin-top: 20px;">
+                <h3>Current Inventory</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Ingredient</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="ingredient in inventoryIngredients">
+                            <td>{{ ingredient.name }}</td>
+                            <td>{{ ingredient.amount }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="homebutton">
+                <button onclick="window.location.href='/index';" style="background-color: transparent;">
+                    Return Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
